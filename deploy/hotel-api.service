@@ -1,0 +1,19 @@
+# systemd unit: keeps the API running and restarts it on crash or reboot.
+# Installed to /etc/systemd/system/hotel-api.service by deploy/setup_server.sh
+[Unit]
+Description=Hotel Booking API (FastAPI / uvicorn)
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/hotel-api
+# Secrets live only in this file on the server (chmod 600), never in git
+EnvironmentFile=/opt/hotel-api/.env
+ExecStart=/opt/hotel-api/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2 --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

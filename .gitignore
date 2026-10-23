@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Secrets — never commit real values (use .env.example as the template)
+.env
+*.pem
+*.key
+deploy_key*
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
