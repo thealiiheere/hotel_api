@@ -83,9 +83,15 @@ jobs:
             exit 1
           fi
           mkdir -p ~/.ssh
-          # Strip CR line endings / BOM (added when the secret is set from Windows)
-          printf '%s\n' "$EC2_SSH_KEY" | tr -d '\r' | sed '1s/^\xEF\xBB\xBF//' > ~/.ssh/deploy_key
+          # Drop CR line endings and UTF-8 BOM bytes (added when the secret is set from Windows)
+          printf '%s\n' "$EC2_SSH_KEY" | tr -d '\r\357\273\277' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
+          # Fail early with a readable message; prints only line count + header, never the key
+          if ! ssh-keygen -y -P "" -f ~/.ssh/deploy_key > /dev/null; then
+            header=$(head -n1 ~/.ssh/deploy_key | grep -E '^-----' || echo 'not a PEM/OpenSSH header')
+            echo "::error::EC2_SSH_KEY is not a valid private key: $(wc -l < ~/.ssh/deploy_key) lines, first line: $header"
+            exit 1
+          fi
           ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
 
       # deploy.sh: git pull -> pip install -> alembic upgrade head -> restart -> local /health
